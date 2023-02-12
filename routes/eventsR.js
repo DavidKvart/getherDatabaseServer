@@ -218,11 +218,18 @@ module.exports = router;
 //   });
 // };
 const sendPushNotification = async (message) => {
-  await axios.post("https://exp.host/--/api/v2/push/send", message, {
-    headers: {
-      Accept: "application/json",
-      "Accept-encoding": "gzip, deflate",
-      "Content-Type": "application/json",
-    },
-  });
+  await axios
+    .post("https://exp.host/--/api/v2/push/send", message, {
+      headers: {
+        Accept: "application/json",
+        "Accept-encoding": "gzip, deflate",
+        "Content-Type": "application/json",
+      },
+    })
+    .then((res) => {
+      console.log(res);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 };
