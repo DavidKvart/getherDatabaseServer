@@ -20,7 +20,7 @@ mongoose
 
 // variable declareition
 const app = express();
-const port = 3100;
+const port = process.env.PORT || 3100;
 
 // middleweres///
 app.use(express.json({ limit: "20mb" }));

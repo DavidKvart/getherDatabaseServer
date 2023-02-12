@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const router = express.Router();
 const { Event, validateEvent } = require("../modules/events/eventsM");
-
+const axios = require("axios");
 //? decleraition
 // generate random roomID for socket
 const generateRoomID = async () => {
@@ -206,14 +206,23 @@ router.put("/:eventID", async (req, res) => {
 
 module.exports = router;
 
+// const sendPushNotification = async (message) => {
+//   await fetch("https://exp.host/--/api/v2/push/send", {
+//     method: "POST",
+//     headers: {
+//       Accept: "application/json",
+//       "Accept-encoding": "gzip, deflate",
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify(message),
+//   });
+// };
 const sendPushNotification = async (message) => {
-  await fetch("https://exp.host/--/api/v2/push/send", {
-    method: "POST",
+  await axios.post("https://exp.host/--/api/v2/push/send", message, {
     headers: {
       Accept: "application/json",
       "Accept-encoding": "gzip, deflate",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(message),
   });
 };
