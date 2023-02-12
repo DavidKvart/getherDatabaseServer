@@ -1,16 +1,17 @@
-const bcrypt = require('bcrypt');
-const express = require('express');
+const bcrypt = require("bcrypt");
+const express = require("express");
 const router = express.Router();
-const { User, validate } = require('../modules/users/signUp');
-const Joi = require('joi');
+const { User, validate } = require("../modules/users/signUp");
+const Joi = require("joi");
+require("dotenv").config();
 
 // ?setting up env
-const cloudinary = require('cloudinary').v2;
+const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
-  cloud_name: 'dfcmf6gbn',
-  api_key: '569295945456765',
-  api_secret: 'ZDjY4svXM3DkPMaMxel4ycMqVcM',
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRETE,
 });
 function validateUser(user) {
   const schema = {
@@ -24,7 +25,7 @@ function validateUser(user) {
 //? ---------
 
 //* SIGN UP
-router.post('/signup', async (req, res) => {
+router.post("/signup", async (req, res) => {
   try {
     //! errors vartificaition
 
@@ -32,17 +33,17 @@ router.post('/signup', async (req, res) => {
     if (error) return res.status(400).send(error.details[0].message);
     let user = await User.findOne({ email: req.body.email });
 
-    if (user) return res.status(400).send('User already exsist ');
+    if (user) return res.status(400).send("User already exsist ");
 
     user = req.body;
 
     // //* initilaize password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt);
-    console.log('-----waiting on cloudinary----');
+
     // //* initilize image
     const uploadResponse = await cloudinary.uploader.upload(user.fileStr, {
-      upload_preset: 'oded_and_david',
+      upload_preset: "oded_and_david",
     });
 
     // //*saving to mongo
@@ -62,17 +63,13 @@ router.post('/signup', async (req, res) => {
 
     let result = await finalUser.save();
 
-    res
-      .header('x-auth-token', result.generateJWT())
-      .header('access-control-expose-headers', 'x-auth-token')
-      .send(result);
+    res.header("x-auth-token", result.generateJWT()).header("access-control-expose-headers", "x-auth-token").send(result);
   } catch (error) {
-    console.log(error);
     res.status(500).send(error);
   }
 });
 //*LOGIN
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     //! errors vartificaition
     //check schema
@@ -82,15 +79,11 @@ router.post('/login', async (req, res) => {
     // check user exist
 
     let user = await User.findOne({ email: req.body.data.email });
-    if (!user) return res.status(400).send('Invalid email or password. ');
+    if (!user) return res.status(400).send("Invalid email or password. ");
 
     //check password
-    const valiedPassword = await bcrypt.compare(
-      req.body.data.password,
-      user.password
-    );
-    if (!valiedPassword)
-      return res.status(400).send('Invalid email or password. ');
+    const valiedPassword = await bcrypt.compare(req.body.data.password, user.password);
+    if (!valiedPassword) return res.status(400).send("Invalid email or password. ");
 
     // check same token ?
     if (user.expoToken !== req.body.deviceToken) {
@@ -100,10 +93,7 @@ router.post('/login', async (req, res) => {
 
     //* response
     if (user) {
-      res
-        .header('x-auth-token', user.generateJWT())
-        .header('access-control-expose-headers', 'x-auth-token')
-        .send(user);
+      res.header("x-auth-token", user.generateJWT()).header("access-control-expose-headers", "x-auth-token").send(user);
     } else {
       res.status(500).send(error);
     }
@@ -112,7 +102,7 @@ router.post('/login', async (req, res) => {
   }
 });
 //* GET ALL USERS
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const users = await User.find().select({
       name: 1,
@@ -126,17 +116,17 @@ router.get('/', async (req, res) => {
 
     if (users.length > 0) {
       let newList = users.map((person) => {
-        let temp = { ...person._doc, imageAvailable: 'user' };
+        let temp = { ...person._doc, imageAvailable: "user" };
         return temp;
       });
       res.send(newList);
-    } else res.status(502).send('cant find users ');
+    } else res.status(502).send("cant find users ");
   } catch (err) {
     res.status(502).send(err.message);
   }
 });
 //* VALIDATE USER BY ID
-router.post('/validate/:id', async (req, res) => {
+router.post("/validate/:id", async (req, res) => {
   try {
     const result = await User.findById(req.params.id).select({
       name: 1,
@@ -176,16 +166,15 @@ router.post('/validate/:id', async (req, res) => {
 
         res.send(answer);
       } else {
-        console.log(' was the same');
         res.send(result);
       }
-    } else res.status(502).send('cant find user');
+    } else res.status(502).send("cant find user");
   } catch (err) {
     res.status(502).send(err.message);
   }
 });
 //* get array of users and return it populated
-router.post('/getusers', async (req, res) => {
+router.post("/getusers", async (req, res) => {
   let tempArray = [];
   for (i = 0; i < req.body.length; i++) {
     let result = await User.find({ _id: req.body[i] }).select({
@@ -206,23 +195,20 @@ router.post('/getusers', async (req, res) => {
   res.send(tempArray);
 });
 //* change user courent locaition
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const result = await User.findByIdAndUpdate(req.params.id, {
       courentLat: req.body.latitude,
       courentLng: req.body.longitude,
     });
-    console.log(result);
-    res
-      .header('x-auth-token', result.generateJWT())
-      .header('access-control-expose-headers', 'x-auth-token')
-      .send(result);
+
+    res.header("x-auth-token", result.generateJWT()).header("access-control-expose-headers", "x-auth-token").send(result);
   } catch (error) {
     res.status(502).send(error);
   }
 });
 //* check if user exist by mail
-router.get('/bymail/:mail', async (req, res) => {
+router.get("/bymail/:mail", async (req, res) => {
   try {
     let result = await User.findOne({ email: req.params.mail }).select({
       _id: 1,
@@ -230,14 +216,14 @@ router.get('/bymail/:mail', async (req, res) => {
     if (result) {
       res.send(result);
     } else {
-      res.send('user does not exist');
+      res.send("user does not exist");
     }
   } catch (error) {
     res.status(502).send(error);
   }
 });
 //* change user passwords
-router.put('/password/:id', async (req, res) => {
+router.put("/password/:id", async (req, res) => {
   try {
     const salt = await bcrypt.genSalt(10);
     let newPassword = await bcrypt.hash(req.body.password, salt);
@@ -256,16 +242,16 @@ router.put('/password/:id', async (req, res) => {
       expoToken: 1,
     });
     if (result) {
-      res.send('password was changed');
+      res.send("password was changed");
     } else {
-      res.send('cant change password');
+      res.send("cant change password");
     }
   } catch (error) {
     res.status(502).send(error);
   }
 });
 //* change users transport type
-router.put('/transport/:id', async (req, res) => {
+router.put("/transport/:id", async (req, res) => {
   try {
     let result = await User.findByIdAndUpdate(req.params.id, {
       transportMode: req.body.transportMode,
@@ -293,10 +279,10 @@ router.put('/transport/:id', async (req, res) => {
         transportMode: 1,
         expoToken: 1,
       });
-      console.log(result);
+
       res.send(result[0]);
     } else {
-      res.send('cant change type');
+      res.send("cant change type");
     }
   } catch (error) {
     res.status(502).send(error);

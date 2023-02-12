@@ -65,7 +65,6 @@ router.post("/", async (req, res) => {
     result.users.map((user, index) => {
       if (index !== result.users.length - 1) {
         if (user.expoToken != "no token provided") {
-          console.log("=====================");
           let message = {
             to: user.expoToken,
             sound: "default",
@@ -80,7 +79,6 @@ router.post("/", async (req, res) => {
 
     res.send(result);
   } catch (error) {
-    console.log(error);
     res.status(500).send(error);
   }
 });
@@ -151,7 +149,7 @@ router.post("/remove/:roomID", async (req, res) => {
     const event = await Event.findOne({ roomID: req.params.roomID });
     if (event) {
       let index = event.users.findIndex((user) => user._id == req.body.userID);
-      console.log(index);
+
       if (index !== -1) {
         event.users.splice(index, 1);
         event.usersStatus.splice(index, 1);
